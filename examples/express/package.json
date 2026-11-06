@@ -2,7 +2,9 @@
   "name": "example-express",
   "private": true,
   "type": "module",
-  "scripts": { "start": "node server.mjs" },
+  "scripts": {
+    "start": "node server.mjs"
+  },
   "dependencies": {
     "@passkey-kit/browser": "*",
     "@passkey-kit/core": "*",

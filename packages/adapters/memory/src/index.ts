@@ -1,10 +1,4 @@
-import type {
-  ChallengeRecord,
-  ChallengeStore,
-  CredentialStore,
-  CredentialUpdate,
-  StoredCredential,
-} from '@passkey-kit/core';
+import type { ChallengeRecord, ChallengeStore, CredentialStore, CredentialUpdate, StoredCredential } from '@passkey-kit/core';
 
 /**
  * In-process stores for development and tests ONLY. Data is lost on restart and is

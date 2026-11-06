@@ -25,4 +25,3 @@ export const passkeyPlugin: FastifyPluginAsync<PasskeyPluginOptions> = async (ap
   app.get('/credentials', route(h.listCredentials));
   app.delete('/credentials/:id', route(h.deleteCredential));
 };
-

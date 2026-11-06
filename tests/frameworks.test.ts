@@ -11,7 +11,13 @@ import { VirtualAuthenticator } from './virtual-authenticator.js';
 const ORIGIN = 'https://example.com';
 const users: Record<string, string> = { alice: 'u-alice' };
 const makePasskey = () =>
-  new Passkey({ rpName: 'T', rpID: 'example.com', origin: ORIGIN, credentials: new MemoryCredentialStore(), challenges: new MemoryChallengeStore() });
+  new Passkey({
+    rpName: 'T',
+    rpID: 'example.com',
+    origin: ORIGIN,
+    credentials: new MemoryCredentialStore(),
+    challenges: new MemoryChallengeStore(),
+  });
 // Test-only "session": the x-user header. Real apps use their own session.
 const getUser = (req: { headers: Record<string, unknown> }) => {
   const id = req.headers['x-user'];
@@ -59,7 +65,10 @@ function suite(name: string, start: () => Promise<{ call: Call; close: () => Pro
       expect((await call('DELETE', `/credentials/${list.body[0].id}`, undefined, 'u-mallory')).status).toBe(404);
       expect((await call('DELETE', `/credentials/${list.body[0].id}`, undefined, 'u-alice')).status).toBe(204);
       const after = await call('POST', '/login/options', {});
-      expect(await call('POST', '/login/verify', { response: a.get(after.body) })).toMatchObject({ status: 401, body: { error: 'CREDENTIAL_NOT_FOUND' } });
+      expect(await call('POST', '/login/verify', { response: a.get(after.body) })).toMatchObject({
+        status: 401,
+        body: { error: 'CREDENTIAL_NOT_FOUND' },
+      });
     });
 
     it('rejects garbage input with 400/401 and an error code only', async () => {
@@ -92,7 +101,12 @@ suite('fastify', async () => {
   const app = Fastify();
   await app.register(passkeyPlugin, { prefix: '/pk', passkey: makePasskey(), ...common });
   const call: Call = async (method, path, body, user) => {
-    const res = await app.inject({ method: method as 'GET', url: '/pk' + path, payload: body as object, headers: user ? { 'x-user': user } : {} });
+    const res = await app.inject({
+      method: method as 'GET',
+      url: '/pk' + path,
+      payload: body as object,
+      headers: user ? { 'x-user': user } : {},
+    });
     return { status: res.statusCode, body: res.body ? JSON.parse(res.body) : null };
   };
   return { call, close: () => app.close() };

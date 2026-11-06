@@ -42,7 +42,9 @@ export class VirtualAuthenticator {
     const { privateKey, publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
     const jwk = publicKey.export({ format: 'jwk' });
     const cose = new Map<number, number | Uint8Array>([
-      [1, 2], [3, -7], [-1, 1],
+      [1, 2],
+      [3, -7],
+      [-1, 1],
       [-2, Buffer.from(jwk.x!, 'base64url')],
       [-3, Buffer.from(jwk.y!, 'base64url')],
     ]);
@@ -50,13 +52,27 @@ export class VirtualAuthenticator {
     const rpId = overrides.rpId ?? options.rp.id!;
     const counter = this.opts.counterStep === 0 ? 0 : 1;
     const authData = Buffer.concat([
-      sha256(rpId), Buffer.from([this.flags(true)]), u32(counter),
-      Buffer.alloc(16), Buffer.from([0, id.length]), id, Buffer.from(isoCBOR.encode(cose)),
+      sha256(rpId),
+      Buffer.from([this.flags(true)]),
+      u32(counter),
+      Buffer.alloc(16),
+      Buffer.from([0, id.length]),
+      id,
+      Buffer.from(isoCBOR.encode(cose)),
     ]);
-    const attestationObject = isoCBOR.encode(new Map<string, unknown>([['fmt', 'none'], ['attStmt', new Map()], ['authData', authData]]) as never);
+    const attestationObject = isoCBOR.encode(
+      new Map<string, unknown>([
+        ['fmt', 'none'],
+        ['attStmt', new Map()],
+        ['authData', authData],
+      ]) as never,
+    );
     this.keys.push({ id, privateKey, userHandle: options.user.id, counter, rpId });
     return {
-      id: b64(id), rawId: b64(id), type: 'public-key', clientExtensionResults: {},
+      id: b64(id),
+      rawId: b64(id),
+      type: 'public-key',
+      clientExtensionResults: {},
       response: {
         clientDataJSON: b64(this.clientData('webauthn.create', options.challenge, overrides.origin)),
         attestationObject: b64(attestationObject),
@@ -65,7 +81,10 @@ export class VirtualAuthenticator {
     };
   }
 
-  get(options: PublicKeyCredentialRequestOptionsJSON, overrides: { origin?: string; key?: Key; tamper?: boolean } = {}): AuthenticationResponseJSON {
+  get(
+    options: PublicKeyCredentialRequestOptionsJSON,
+    overrides: { origin?: string; key?: Key; tamper?: boolean } = {},
+  ): AuthenticationResponseJSON {
     const allowed = options.allowCredentials?.map((c) => c.id);
     const key = overrides.key ?? this.keys.find((k) => !allowed || allowed.includes(b64(k.id)));
     if (!key) throw new Error('No matching credential');
@@ -75,7 +94,10 @@ export class VirtualAuthenticator {
     let signature = sign('sha256', Buffer.concat([authData, sha256(clientDataJSON)]), key.privateKey);
     if (overrides.tamper) signature = Buffer.from(signature.map((b, i) => (i === 10 ? b ^ 0xff : b)));
     return {
-      id: b64(key.id), rawId: b64(key.id), type: 'public-key', clientExtensionResults: {},
+      id: b64(key.id),
+      rawId: b64(key.id),
+      type: 'public-key',
+      clientExtensionResults: {},
       response: {
         clientDataJSON: b64(clientDataJSON),
         authenticatorData: b64(authData),

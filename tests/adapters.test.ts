@@ -56,6 +56,12 @@ if (process.env.MONGODB_URL) {
   };
 }
 
+// In CI every database must be present; skipping silently would hide a broken adapter.
+if (process.env.REQUIRE_DB_TESTS) {
+  for (const n of ['postgres', 'mysql', 'mongodb'])
+    if (!harnesses[n]) throw new Error(`REQUIRE_DB_TESTS is set but ${n.toUpperCase()}_URL is missing`);
+}
+
 for (const name of ['memory', 'postgres', 'mysql', 'mongodb']) {
   const h = harnesses[name];
   describe.skipIf(!h)(`${name} adapter`, () => {
@@ -65,8 +71,14 @@ for (const name of ['memory', 'postgres', 'mysql', 'mongodb']) {
     afterAll(async () => h?.teardown?.());
 
     const cred = (id: string, userId = 'u1'): StoredCredential => ({
-      id, userId, publicKey: new Uint8Array([1, 2, 3, 255]), counter: 5, transports: ['internal', 'hybrid'],
-      deviceType: 'multiDevice', backedUp: true, aaguid: '00000000-0000-0000-0000-000000000000',
+      id,
+      userId,
+      publicKey: new Uint8Array([1, 2, 3, 255]),
+      counter: 5,
+      transports: ['internal', 'hybrid'],
+      deviceType: 'multiDevice',
+      backedUp: true,
+      aaguid: '00000000-0000-0000-0000-000000000000',
       createdAt: new Date(Math.floor(Date.now() / 1000) * 1000),
     });
 

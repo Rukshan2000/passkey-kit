@@ -18,8 +18,7 @@ export class CredentialManager {
 
   /** Revoke (delete) a passkey owned by `userId`. Throws if not found or not owned. */
   async delete(userId: string, credentialId: string): Promise<void> {
-    if (!(await this.store.delete(credentialId, userId)))
-      throw new PasskeyError('CREDENTIAL_NOT_FOUND', 'Credential not found');
+    if (!(await this.store.delete(credentialId, userId))) throw new PasskeyError('CREDENTIAL_NOT_FOUND', 'Credential not found');
   }
 
   private async owned(userId: string, credentialId: string): Promise<StoredCredential> {

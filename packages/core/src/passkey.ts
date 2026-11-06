@@ -4,8 +4,7 @@ import { PasskeyError } from './errors.js';
 import { Registration } from './registration.js';
 import type { PasskeyConfig } from './types.js';
 
-export type ResolvedConfig = Required<Omit<PasskeyConfig, 'authenticatorAttachment'>> &
-  Pick<PasskeyConfig, 'authenticatorAttachment'>;
+export type ResolvedConfig = Required<Omit<PasskeyConfig, 'authenticatorAttachment'>> & Pick<PasskeyConfig, 'authenticatorAttachment'>;
 
 function invalid(message: string): never {
   throw new PasskeyError('INVALID_CONFIG', message);
