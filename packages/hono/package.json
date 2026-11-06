@@ -1,0 +1,50 @@
+{
+  "name": "@passkey-kit/hono",
+  "version": "0.2.0",
+  "description": "Hono routes for passkey-kit.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rukshan2000/passkey-kit.git",
+    "directory": "packages/hono"
+  },
+  "keywords": [
+    "passkey",
+    "webauthn",
+    "fido2",
+    "passwordless",
+    "authentication"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup --config ../../tsup.config.ts",
+    "prepack": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@passkey-kit/core": "^0.2.0"
+  },
+  "peerDependencies": {
+    "hono": "^4.0.0"
+  }
+}

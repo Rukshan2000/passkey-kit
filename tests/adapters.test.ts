@@ -56,13 +56,36 @@ if (process.env.MONGODB_URL) {
   };
 }
 
+if (process.env.REDIS_URL) {
+  const { createClient } = await import('redis');
+  const { Redis } = await import('ioredis');
+  const { RedisChallengeStore } = await import('@passkey-kit/redis');
+  const nodeRedis = await createClient({ url: process.env.REDIS_URL }).connect();
+  const ioredis = new Redis(process.env.REDIS_URL);
+  // Redis stores only challenges, so credentials come from memory here.
+  harnesses.redis = {
+    async setup() {
+      await nodeRedis.flushDb();
+      return { credentials: new MemoryCredentialStore(), challenges: new RedisChallengeStore(nodeRedis) };
+    },
+    teardown: async () => void (await nodeRedis.quit()),
+  };
+  harnesses.ioredis = {
+    async setup() {
+      await ioredis.flushdb();
+      return { credentials: new MemoryCredentialStore(), challenges: new RedisChallengeStore(ioredis, 'test:') };
+    },
+    teardown: async () => void (await ioredis.quit()),
+  };
+}
+
 // In CI every database must be present; skipping silently would hide a broken adapter.
 if (process.env.REQUIRE_DB_TESTS) {
-  for (const n of ['postgres', 'mysql', 'mongodb'])
+  for (const n of ['postgres', 'mysql', 'mongodb', 'redis'])
     if (!harnesses[n]) throw new Error(`REQUIRE_DB_TESTS is set but ${n.toUpperCase()}_URL is missing`);
 }
 
-for (const name of ['memory', 'postgres', 'mysql', 'mongodb']) {
+for (const name of ['memory', 'postgres', 'mysql', 'mongodb', 'redis', 'ioredis']) {
   const h = harnesses[name];
   describe.skipIf(!h)(`${name} adapter`, () => {
     let credentials: CredentialStore;

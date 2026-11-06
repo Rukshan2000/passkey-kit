@@ -1,5 +1,5 @@
 // Imports every built package from dist via its package name, as a consumer would.
-const names = ['core', 'memory', 'postgres', 'mysql', 'mongodb', 'express', 'fastify', 'browser'];
+const names = ['core', 'memory', 'postgres', 'mysql', 'mongodb', 'redis', 'express', 'fastify', 'hono', 'next', 'browser'];
 for (const n of names) {
   const m = await import(`@passkey-kit/${n}`);
   if (!Object.keys(m).length) throw new Error(`@passkey-kit/${n} has no exports`);

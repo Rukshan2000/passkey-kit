@@ -1,0 +1,57 @@
+{
+  "name": "@passkey-kit/redis",
+  "version": "0.2.0",
+  "description": "Redis challenge store for passkey-kit.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rukshan2000/passkey-kit.git",
+    "directory": "packages/adapters/redis"
+  },
+  "keywords": [
+    "passkey",
+    "webauthn",
+    "fido2",
+    "passwordless",
+    "authentication"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup --config ../../../tsup.config.ts",
+    "prepack": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@passkey-kit/core": "^0.2.0",
+    "redis": "^4.0.0 || ^5.0.0 || ^6.0.0",
+    "ioredis": "^5.0.0 || ^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "redis": {
+      "optional": true
+    },
+    "ioredis": {
+      "optional": true
+    }
+  }
+}

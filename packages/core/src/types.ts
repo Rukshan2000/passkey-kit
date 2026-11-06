@@ -89,9 +89,45 @@ export interface PasskeyConfig {
   authenticatorAttachment?: 'platform' | 'cross-platform';
   /** Challenge lifetime and ceremony timeout in ms. Default 5 minutes. */
   timeoutMs?: number;
+  /**
+   * HTTPS origins on OTHER domains allowed to use this rpID's passkeys (WebAuthn related
+   * origins, e.g. "https://example.co.uk" for rpID "example.com"). Serve
+   * `passkey.wellKnownWebauthn()` at `https://<rpID>/.well-known/webauthn`.
+   */
+  relatedOrigins?: string[];
+  /**
+   * Only allow these authenticator models (AAGUIDs), e.g. company-issued security keys.
+   * Requires `attestationType: 'direct'` or `'enterprise'`; registrations without a
+   * certificate-backed attestation are rejected. Call `MetadataService.initialize()` from
+   * `@simplewebauthn/server` at startup so attestation certificates can be validated.
+   */
+  allowedAuthenticators?: string[];
+  /** Lifecycle callbacks, e.g. for audit logs or "new sign-in" emails. */
+  hooks?: PasskeyHooks;
   /** Current time source (tests). */
   now?: () => number;
 }
+
+/**
+ * Lifecycle callbacks. They are awaited, and an error thrown in one propagates to the
+ * caller, so catch inside the hook if it must never affect sign-in.
+ */
+export interface PasskeyHooks {
+  onRegistered?(event: { userId: string; credential: StoredCredential }): void | Promise<void>;
+  onLogin?(event: { userId: string; credential: StoredCredential; userVerified: boolean }): void | Promise<void>;
+  /** `credentialId` is client-supplied and unverified; use it only for logging. */
+  onLoginFailed?(event: { error: import('./errors.js').PasskeyError; credentialId?: string }): void | Promise<void>;
+  onCredentialDeleted?(event: { userId: string; credentialId: string }): void | Promise<void>;
+}
+
+/**
+ * A WebAuthn Signal API payload. Pass it to `PasskeyClient.signal()` in the browser so the
+ * user's password manager can hide deleted passkeys or update the account name.
+ */
+export type PasskeySignal =
+  | { signalName: 'unknownCredential'; rpID: string; credentialID: string }
+  | { signalName: 'allAcceptedCredentials'; rpID: string; userID: string; allAcceptedCredentialIDs: string[] }
+  | { signalName: 'currentUserDetails'; rpID: string; userID: string; userName: string; userDisplayName?: string };
 
 export interface RegistrationOptionsInput {
   userId: string;
@@ -120,4 +156,10 @@ export interface AuthenticationVerifyInput {
 export type VerifyResult<T> = ({ verified: true } & T) | { verified: false; error: import('./errors.js').PasskeyError };
 
 export type RegistrationResult = VerifyResult<{ credential: StoredCredential }>;
-export type AuthenticationResult = VerifyResult<{ userId: string; credential: StoredCredential; userVerified: boolean }>;
+export type AuthenticationResult = VerifyResult<{
+  userId: string;
+  credential: StoredCredential;
+  userVerified: boolean;
+  /** When the passkey was verified. Store it in the session to support step-up checks. */
+  authenticatedAt: Date;
+}>;

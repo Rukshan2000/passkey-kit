@@ -7,7 +7,9 @@ export type PasskeyErrorCode =
   | 'CREDENTIAL_NOT_FOUND'
   | 'CREDENTIAL_EXISTS'
   | 'CREDENTIAL_OWNER_MISMATCH'
-  | 'VERIFICATION_FAILED';
+  | 'VERIFICATION_FAILED'
+  | 'REAUTH_REQUIRED'
+  | 'AUTHENTICATOR_NOT_ALLOWED';
 
 /**
  * All errors thrown or returned by passkey-kit. `message` never contains challenges,

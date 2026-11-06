@@ -35,26 +35,26 @@ Task list for upcoming work. Tick items off as they land.
 
 ## 2. Developer features
 
-- [ ] Friendly passkey names from the AAGUID ("iCloud Keychain", "YubiKey 5", …)
-- [ ] Signal API support (`sendSignal`) so deleted passkeys are also removed from password managers
-- [ ] Lifecycle hooks: `onRegistered`, `onLogin`, `onLoginFailed`, `onCredentialDeleted`
-- [ ] Step-up re-authentication: `requireRecentAuth(maxAgeMs)`
-- [ ] Redis challenge store (`@passkey-kit/redis`)
-- [ ] Built-in rate-limiting hooks and documented recipes
+- [x] Friendly passkey names from the AAGUID ("iCloud Keychain", "YubiKey 5", …)
+- [x] Signal API support (`sendSignal`) so deleted passkeys are also removed from password managers
+- [x] Lifecycle hooks: `onRegistered`, `onLogin`, `onLoginFailed`, `onCredentialDeleted`
+- [x] Step-up re-authentication: `requireRecentAuth(maxAgeMs)`
+- [x] Redis challenge store (`@passkey-kit/redis`)
+- [x] Built-in rate-limiting hooks and documented recipes
 
 ## 3. Integrations
 
 - [ ] React hooks package: `usePasskeyRegister()`, `usePasskeyLogin()`, autofill support
-- [ ] Hono adapter
+- [x] Hono adapter
 - [ ] NestJS module
-- [ ] Next.js helper package (replacing the hand-written example route)
+- [x] Next.js helper package (replacing the hand-written example route)
 - [ ] Prisma adapter
 - [ ] Drizzle adapter
 
 ## 4. Advanced
 
-- [ ] Multi-tenant support: a different `rpID` and origin per customer domain
-- [ ] Related origins (one passkey working across several domains)
-- [ ] Attestation and metadata (MDS) checks to allow only specific authenticators
+- [x] Multi-tenant support: a different `rpID` and origin per customer domain
+- [x] Related origins (one passkey working across several domains)
+- [x] Attestation and metadata (MDS) checks to allow only specific authenticators
 - [ ] Guide to account recovery when a user loses all their devices
 - [ ] Documentation website (e.g. VitePress)

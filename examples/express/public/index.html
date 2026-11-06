@@ -95,8 +95,12 @@
             const li = document.createElement('li');
             const del = document.createElement('button');
             del.textContent = 'Delete';
-            del.onclick = run(() => api('DELETE', `/auth/passkey/credentials/${encodeURIComponent(c.id)}`));
-            li.append(`${c.name ?? 'Passkey'} — created ${c.createdAt} `, del);
+            del.onclick = run(async () => {
+              const res = await api('DELETE', `/auth/passkey/credentials/${encodeURIComponent(c.id)}`);
+              await client.signal(res.signal); // also remove it from the password manager, where supported
+              return res;
+            });
+            li.append(`${c.name ?? c.authenticator ?? 'Passkey'} — created ${c.createdAt} `, del);
             return li;
           }),
         );

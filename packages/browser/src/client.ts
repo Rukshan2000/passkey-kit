@@ -6,6 +6,10 @@ import {
   platformAuthenticatorIsAvailable,
   startAuthentication,
   startRegistration,
+  sendSignal,
+  type SendSignalAllAcceptedCredentialsOpts,
+  type SendSignalCurrentUserDetailsOpts,
+  type SendSignalUnknownCredentialOpts,
   type AuthenticationResponseJSON,
   type PublicKeyCredentialCreationOptionsJSON,
   type PublicKeyCredentialRequestOptionsJSON,
@@ -19,6 +23,9 @@ export type {
   RegistrationResponseJSON,
 };
 export { WebAuthnError };
+
+/** A Signal API payload produced by `@passkey-kit/core` (e.g. in a delete or failed-login response). */
+export type PasskeySignal = SendSignalUnknownCredentialOpts | SendSignalAllAcceptedCredentialsOpts | SendSignalCurrentUserDetailsOpts;
 
 /** Thrown when the browser cannot perform WebAuthn at all. */
 export class PasskeyUnsupportedError extends Error {
@@ -69,6 +76,21 @@ export class PasskeyClient {
   ): Promise<AuthenticationResponseJSON> {
     this.assertSupported();
     return withSignal(opts.signal, () => startAuthentication({ optionsJSON: options, useBrowserAutofill: opts.conditional }));
+  }
+
+  /**
+   * Tell the browser's password manager about passkey changes (WebAuthn Signal API), so a
+   * deleted passkey stops being offered. Signals are hints: returns false, without
+   * throwing, when the browser doesn't support them or ignores the request.
+   */
+  async signal(signal: PasskeySignal | null | undefined): Promise<boolean> {
+    if (!signal) return false;
+    try {
+      await sendSignal(signal);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /** Cancel any in-flight ceremony (e.g. pending conditional UI before a modal login). */
