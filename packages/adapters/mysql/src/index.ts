@@ -58,7 +58,7 @@ export class MysqlCredentialStore implements CredentialStore {
   }
   async update(id: string, u: CredentialUpdate): Promise<void> {
     await this.pool.query(
-      `UPDATE passkey_credentials SET counter = COALESCE(?, counter), backed_up = COALESCE(?, backed_up),
+      `UPDATE passkey_credentials SET counter = GREATEST(counter, COALESCE(?, counter)), backed_up = COALESCE(?, backed_up),
          last_used_at = COALESCE(?, last_used_at), name = COALESCE(?, name) WHERE id = ?`,
       [u.counter ?? null, u.backedUp ?? null, u.lastUsedAt ?? null, u.name ?? null, id],
     );

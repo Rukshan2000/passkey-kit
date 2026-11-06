@@ -47,6 +47,7 @@ export interface CredentialStore {
   create(credential: StoredCredential): Promise<void>;
   findById(id: string): Promise<StoredCredential | null>;
   listByUser(userId: string): Promise<StoredCredential[]>;
+  /** `counter` must only ever increase: store `max(current, update.counter)`. */
   update(id: string, update: CredentialUpdate): Promise<void>;
   /** Delete a credential only if it belongs to `userId`. Returns whether one was deleted. */
   delete(id: string, userId: string): Promise<boolean>;
@@ -80,7 +81,11 @@ export interface PasskeyConfig {
   origin: string | string[];
   credentials: CredentialStore;
   challenges: ChallengeStore;
-  /** Default: "preferred". "required" also enforces UV during verification. */
+  /**
+   * Default: "required": the authenticator must verify the user (PIN/biometric) and the
+   * server rejects responses without the UV flag. "preferred"/"discouraged" accept
+   * possession alone (e.g. a tapped security key); check `userVerified` yourself then.
+   */
   userVerification?: UserVerification;
   /** Default: "required" (discoverable passkeys). */
   residentKey?: 'required' | 'preferred' | 'discouraged';
