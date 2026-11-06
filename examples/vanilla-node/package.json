@@ -1,0 +1,7 @@
+{
+  "name": "example-vanilla-node",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node server.mjs" },
+  "dependencies": { "@passkey-kit/core": "*", "@passkey-kit/memory": "*" }
+}

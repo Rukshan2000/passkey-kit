@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"],
+    "noEmit": true,
+    "paths": {
+      "@passkey-kit/core": ["./packages/core/src/index.ts"],
+      "@passkey-kit/memory": ["./packages/adapters/memory/src/index.ts"],
+      "@passkey-kit/browser": ["./packages/browser/src/index.ts"],
+      "@passkey-kit/express": ["./packages/express/src/index.ts"],
+      "@passkey-kit/fastify": ["./packages/fastify/src/index.ts"],
+      "@passkey-kit/postgres": ["./packages/adapters/postgres/src/index.ts"],
+      "@passkey-kit/mysql": ["./packages/adapters/mysql/src/index.ts"],
+      "@passkey-kit/mongodb": ["./packages/adapters/mongodb/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/src", "packages/adapters/*/src", "tests"]
+}

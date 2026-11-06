@@ -1,0 +1,14 @@
+{
+  "name": "example-express",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node server.mjs" },
+  "dependencies": {
+    "@passkey-kit/browser": "*",
+    "@passkey-kit/core": "*",
+    "@passkey-kit/express": "*",
+    "@passkey-kit/memory": "*",
+    "express": "^5.0.0",
+    "express-session": "^1.18.0"
+  }
+}
