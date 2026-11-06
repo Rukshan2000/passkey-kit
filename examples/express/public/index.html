@@ -1,80 +1,113 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>passkey-kit demo</title>
-  <style>body{font:16px system-ui;max-width:40rem;margin:2rem auto;padding:0 1rem}button,input{font:inherit;margin:.25rem 0}pre{background:#f4f4f4;padding:1rem;overflow:auto}</style>
-  <script type="importmap">
-    { "imports": { "@simplewebauthn/browser": "/vendor/simplewebauthn/index.js" } }
-  </script>
-</head>
-<body>
-  <h1>passkey-kit demo</h1>
-  <p id="status">Checking browser support…</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>passkey-kit demo</title>
+    <style>
+      body {
+        font: 16px system-ui;
+        max-width: 40rem;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      button,
+      input {
+        font: inherit;
+        margin: 0.25rem 0;
+      }
+      pre {
+        background: #f4f4f4;
+        padding: 1rem;
+        overflow: auto;
+      }
+    </style>
+    <script type="importmap">
+      { "imports": { "@simplewebauthn/browser": "/vendor/simplewebauthn/index.js" } }
+    </script>
+  </head>
+  <body>
+    <h1>passkey-kit demo</h1>
+    <p id="status">Checking browser support…</p>
 
-  <h2>1. Create an account</h2>
-  <input id="username" placeholder="username" autocomplete="username webauthn" />
-  <button id="signup">Sign up</button>
+    <h2>1. Create an account</h2>
+    <input id="username" placeholder="username" autocomplete="username webauthn" />
+    <button id="signup">Sign up</button>
 
-  <h2>2. Add a passkey</h2>
-  <button id="register">Register passkey</button>
+    <h2>2. Add a passkey</h2>
+    <button id="register">Register passkey</button>
 
-  <h2>3. Sign in with a passkey</h2>
-  <button id="logout">Log out</button>
-  <button id="login">Sign in with passkey</button>
+    <h2>3. Sign in with a passkey</h2>
+    <button id="logout">Log out</button>
+    <button id="login">Sign in with passkey</button>
 
-  <h2>Your passkeys</h2>
-  <button id="list">Refresh</button>
-  <ul id="creds"></ul>
-  <pre id="out"></pre>
+    <h2>Your passkeys</h2>
+    <button id="list">Refresh</button>
+    <ul id="creds"></ul>
+    <pre id="out"></pre>
 
-  <script type="module">
-    import { PasskeyClient } from '/vendor/passkey-kit/index.js';
-    const client = new PasskeyClient();
-    const $ = (id) => document.getElementById(id);
-    const log = (v) => ($('out').textContent = JSON.stringify(v, null, 2));
-    const api = async (method, path, body) => {
-      const res = await fetch(path, { method, headers: { 'content-type': 'application/json' }, body: body && JSON.stringify(body) });
-      const text = await res.text();
-      const data = text ? JSON.parse(text) : null;
-      if (!res.ok) throw Object.assign(new Error(data?.error ?? res.statusText), { data });
-      return data;
-    };
-    const run = (fn) => async () => { try { log(await fn()); } catch (e) { log({ error: e.message, ...e.data }); } };
+    <script type="module">
+      import { PasskeyClient } from '/vendor/passkey-kit/index.js';
+      const client = new PasskeyClient();
+      const $ = (id) => document.getElementById(id);
+      const log = (v) => ($('out').textContent = JSON.stringify(v, null, 2));
+      const api = async (method, path, body) => {
+        const res = await fetch(path, { method, headers: { 'content-type': 'application/json' }, body: body && JSON.stringify(body) });
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : null;
+        if (!res.ok) throw Object.assign(new Error(data?.error ?? res.statusText), { data });
+        return data;
+      };
+      const run = (fn) => async () => {
+        try {
+          log(await fn());
+        } catch (e) {
+          log({ error: e.message, ...e.data });
+        }
+      };
 
-    const caps = await client.capabilities();
-    $('status').textContent = caps.webauthn ? `Passkeys supported (platform authenticator: ${caps.platformAuthenticator}, autofill: ${caps.conditionalMediation})` : 'This browser does not support passkeys.';
+      const caps = await client.capabilities();
+      $('status').textContent = caps.webauthn
+        ? `Passkeys supported (platform authenticator: ${caps.platformAuthenticator}, autofill: ${caps.conditionalMediation})`
+        : 'This browser does not support passkeys.';
 
-    $('signup').onclick = run(() => api('POST', '/signup', { username: $('username').value }));
-    $('logout').onclick = run(() => api('POST', '/logout'));
-    $('register').onclick = run(async () => {
-      client.cancel(); // stop pending autofill ceremony
-      const options = await api('POST', '/auth/passkey/register/options');
-      const response = await client.register(options);
-      return api('POST', '/auth/passkey/register/verify', { response, name: navigator.platform });
-    });
-    const login = async (conditional) => {
-      const options = await api('POST', '/auth/passkey/login/options', {});
-      const response = await client.authenticate(options, { conditional });
-      return api('POST', '/auth/passkey/login/verify', { response });
-    };
-    $('login').onclick = run(() => { client.cancel(); return login(false); });
-    $('list').onclick = run(async () => {
-      const creds = await api('GET', '/auth/passkey/credentials');
-      $('creds').replaceChildren(...creds.map((c) => {
-        const li = document.createElement('li');
-        const del = document.createElement('button');
-        del.textContent = 'Delete';
-        del.onclick = run(() => api('DELETE', `/auth/passkey/credentials/${encodeURIComponent(c.id)}`));
-        li.append(`${c.name ?? 'Passkey'} — created ${c.createdAt} `, del);
-        return li;
-      }));
-      return creds;
-    });
+      $('signup').onclick = run(() => api('POST', '/signup', { username: $('username').value }));
+      $('logout').onclick = run(() => api('POST', '/logout'));
+      $('register').onclick = run(async () => {
+        client.cancel(); // stop pending autofill ceremony
+        const options = await api('POST', '/auth/passkey/register/options');
+        const response = await client.register(options);
+        return api('POST', '/auth/passkey/register/verify', { response, name: navigator.platform });
+      });
+      const login = async (conditional) => {
+        const options = await api('POST', '/auth/passkey/login/options', {});
+        const response = await client.authenticate(options, { conditional });
+        return api('POST', '/auth/passkey/login/verify', { response });
+      };
+      $('login').onclick = run(() => {
+        client.cancel();
+        return login(false);
+      });
+      $('list').onclick = run(async () => {
+        const creds = await api('GET', '/auth/passkey/credentials');
+        $('creds').replaceChildren(
+          ...creds.map((c) => {
+            const li = document.createElement('li');
+            const del = document.createElement('button');
+            del.textContent = 'Delete';
+            del.onclick = run(() => api('DELETE', `/auth/passkey/credentials/${encodeURIComponent(c.id)}`));
+            li.append(`${c.name ?? 'Passkey'} — created ${c.createdAt} `, del);
+            return li;
+          }),
+        );
+        return creds;
+      });
 
-    // Passkey autofill: offer passkeys in the username field's suggestions.
-    if (caps.conditionalMediation) login(true).then(log).catch(() => {});
-  </script>
-</body>
+      // Passkey autofill: offer passkeys in the username field's suggestions.
+      if (caps.conditionalMediation)
+        login(true)
+          .then(log)
+          .catch(() => {});
+    </script>
+  </body>
 </html>

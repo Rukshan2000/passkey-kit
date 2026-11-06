@@ -37,7 +37,11 @@ async function readJson(req) {
     if ((size += c.length) > 64 * 1024) throw new Error('body too large');
     chunks.push(c);
   }
-  try { return chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {}; } catch { return {}; }
+  try {
+    return chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {};
+  } catch {
+    return {};
+  }
 }
 
 createServer(async (req, res) => {
@@ -46,8 +50,14 @@ createServer(async (req, res) => {
     const del = req.method === 'DELETE' && url.pathname.match(/^\/credentials\/([^/]+)$/);
     const handler = del ? h.deleteCredential : routes[`${req.method} ${url.pathname}`];
     if (!handler) return res.writeHead(404).end();
-    const { status, body } = await handler({ req, body: await readJson(req), params: del ? { id: decodeURIComponent(del[1]) } : undefined });
-    res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' }).end(body === null ? undefined : JSON.stringify(body));
+    const { status, body } = await handler({
+      req,
+      body: await readJson(req),
+      params: del ? { id: decodeURIComponent(del[1]) } : undefined,
+    });
+    res
+      .writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' })
+      .end(body === null ? undefined : JSON.stringify(body));
   } catch (e) {
     console.error('passkey request failed:', e instanceof Error ? e.message : e);
     res.writeHead(500).end();

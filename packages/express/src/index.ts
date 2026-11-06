@@ -19,7 +19,8 @@ export function passkeyRouter(options: HandlerOptions<Request>): Router {
   const router = express.Router();
   router.use(express.json({ limit: '64kb' }));
 
-  const route = (fn: (i: { req: Request; body: unknown; params?: Record<string, string> }) => Promise<HandlerResponse>) =>
+  const route =
+    (fn: (i: { req: Request; body: unknown; params?: Record<string, string> }) => Promise<HandlerResponse>) =>
     async (req: Request, res: Response, next: (e?: unknown) => void) => {
       try {
         const { status, body } = await fn({ req, body: req.body, params: req.params as Record<string, string> });

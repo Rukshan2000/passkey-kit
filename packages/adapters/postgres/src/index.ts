@@ -28,10 +28,19 @@ export class PostgresCredentialStore implements CredentialStore {
   constructor(private readonly db: PgQueryable) {}
 
   async create(c: StoredCredential): Promise<void> {
-    await this.db.query(
-      `INSERT INTO passkey_credentials (${COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-      [c.id, c.userId, Buffer.from(c.publicKey), c.counter, c.transports ?? null, c.deviceType, c.backedUp, c.aaguid, c.name ?? null, c.createdAt, c.lastUsedAt ?? null],
-    );
+    await this.db.query(`INSERT INTO passkey_credentials (${COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [
+      c.id,
+      c.userId,
+      Buffer.from(c.publicKey),
+      c.counter,
+      c.transports ?? null,
+      c.deviceType,
+      c.backedUp,
+      c.aaguid,
+      c.name ?? null,
+      c.createdAt,
+      c.lastUsedAt ?? null,
+    ]);
   }
   async findById(id: string): Promise<StoredCredential | null> {
     const { rows } = await this.db.query(`SELECT ${COLS} FROM passkey_credentials WHERE id = $1`, [id]);
@@ -62,7 +71,10 @@ export class PostgresChallengeStore implements ChallengeStore {
 
   async save(r: ChallengeRecord): Promise<void> {
     await this.db.query('INSERT INTO passkey_challenges (challenge, ceremony, user_id, expires_at) VALUES ($1,$2,$3,$4)', [
-      r.challenge, r.ceremony, r.userId ?? null, r.expiresAt,
+      r.challenge,
+      r.ceremony,
+      r.userId ?? null,
+      r.expiresAt,
     ]);
   }
   async consume(challenge: string): Promise<ChallengeRecord | null> {

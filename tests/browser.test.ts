@@ -14,12 +14,18 @@ describe('PasskeyClient', () => {
   it('passes decoded options to navigator.credentials.create and serializes the result', async () => {
     const buf = (s: string) => new TextEncoder().encode(s).buffer;
     const create = vi.fn(async () => ({
-      id: 'Y3JlZA', rawId: buf('cred'), type: 'public-key', authenticatorAttachment: 'platform',
+      id: 'Y3JlZA',
+      rawId: buf('cred'),
+      type: 'public-key',
+      authenticatorAttachment: 'platform',
       getClientExtensionResults: () => ({}),
       response: {
-        clientDataJSON: buf('cdj'), attestationObject: buf('att'),
-        getTransports: () => ['internal'], getPublicKeyAlgorithm: () => -7,
-        getPublicKey: () => null, getAuthenticatorData: () => buf('ad'),
+        clientDataJSON: buf('cdj'),
+        attestationObject: buf('att'),
+        getTransports: () => ['internal'],
+        getPublicKeyAlgorithm: () => -7,
+        getPublicKey: () => null,
+        getAuthenticatorData: () => buf('ad'),
       },
     }));
     class PKC {}

@@ -78,8 +78,7 @@ export class Registration {
       if (!verification.verified) throw new PasskeyError('VERIFICATION_FAILED', 'Registration response failed verification');
 
       const info = verification.registrationInfo;
-      if (await cfg.credentials.findById(info.credential.id))
-        throw new PasskeyError('CREDENTIAL_EXISTS', 'Credential already registered');
+      if (await cfg.credentials.findById(info.credential.id)) throw new PasskeyError('CREDENTIAL_EXISTS', 'Credential already registered');
       const credential: StoredCredential = {
         id: info.credential.id,
         userId,

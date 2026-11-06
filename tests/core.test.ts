@@ -10,7 +10,13 @@ function setup(extra: Partial<PasskeyConfig> = {}) {
   const credentials = new MemoryCredentialStore();
   const challenges = new MemoryChallengeStore();
   const passkey = new Passkey({
-    rpName: 'Test', rpID: 'example.com', origin: ORIGIN, credentials, challenges, now: () => clock.t, ...extra,
+    rpName: 'Test',
+    rpID: 'example.com',
+    origin: ORIGIN,
+    credentials,
+    challenges,
+    now: () => clock.t,
+    ...extra,
   });
   return { passkey, credentials, challenges, clock, auth: new VirtualAuthenticator({ origin: ORIGIN }) };
 }
@@ -25,7 +31,13 @@ async function register(s: ReturnType<typeof setup>, userId = 'user-1', auth = s
 const code = (r: { verified: boolean; error?: PasskeyError }) => (r.verified ? 'OK' : r.error!.code);
 
 describe('config validation', () => {
-  const base = { rpName: 'x', rpID: 'example.com', origin: ORIGIN, credentials: new MemoryCredentialStore(), challenges: new MemoryChallengeStore() };
+  const base = {
+    rpName: 'x',
+    rpID: 'example.com',
+    origin: ORIGIN,
+    credentials: new MemoryCredentialStore(),
+    challenges: new MemoryChallengeStore(),
+  };
   it.each([
     [{ rpID: 'https://example.com' }],
     [{ origin: 'http://example.com' }],
@@ -113,7 +125,9 @@ describe('registration', () => {
     const s = setup();
     await expect(s.passkey.registration.generateOptions({ userId: '', username: 'x' })).rejects.toThrow(PasskeyError);
     expect(code(await s.passkey.registration.verify({ userId: 'u', response: null as never }))).toBe('INVALID_INPUT');
-    expect(code(await s.passkey.registration.verify({ userId: 'u', response: { response: { clientDataJSON: '!!' } } as never }))).toBe('INVALID_INPUT');
+    expect(code(await s.passkey.registration.verify({ userId: 'u', response: { response: { clientDataJSON: '!!' } } as never }))).toBe(
+      'INVALID_INPUT',
+    );
   });
 
   it('excludes existing credentials and supports multiple devices', async () => {
@@ -158,7 +172,9 @@ describe('authentication', () => {
     const s = setup();
     await register(s);
     const opts = await s.passkey.authentication.generateOptions();
-    expect(code(await s.passkey.authentication.verify({ response: s.auth.get(opts, { origin: 'https://evil.com' }) }))).toBe('VERIFICATION_FAILED');
+    expect(code(await s.passkey.authentication.verify({ response: s.auth.get(opts, { origin: 'https://evil.com' }) }))).toBe(
+      'VERIFICATION_FAILED',
+    );
   });
 
   it('rejects unknown credential', async () => {

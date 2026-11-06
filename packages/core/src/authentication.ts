@@ -68,7 +68,12 @@ export class Authentication {
           expectedChallenge: record.challenge,
           expectedOrigin: cfg.origin,
           expectedRPID: cfg.rpID,
-          credential: { id: credential.id, publicKey: credential.publicKey, counter: credential.counter, transports: credential.transports },
+          credential: {
+            id: credential.id,
+            publicKey: credential.publicKey,
+            counter: credential.counter,
+            transports: credential.transports,
+          },
           requireUserVerification: cfg.userVerification === 'required',
         });
       } catch (cause) {

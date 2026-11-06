@@ -5,7 +5,9 @@ interface Conn {
 }
 /** A `mysql2/promise` Pool (or compatible). */
 export interface MysqlPool extends Conn {
-  getConnection(): Promise<Conn & { beginTransaction(): Promise<void>; commit(): Promise<void>; rollback(): Promise<void>; release(): void }>;
+  getConnection(): Promise<
+    Conn & { beginTransaction(): Promise<void>; commit(): Promise<void>; rollback(): Promise<void>; release(): void }
+  >;
 }
 
 const COLS = 'id, user_id, public_key, counter, transports, device_type, backed_up, aaguid, name, created_at, last_used_at';
@@ -33,8 +35,17 @@ export class MysqlCredentialStore implements CredentialStore {
 
   async create(c: StoredCredential): Promise<void> {
     await this.pool.query(`INSERT INTO passkey_credentials (${COLS}) VALUES (?,?,?,?,?,?,?,?,?,?,?)`, [
-      c.id, c.userId, Buffer.from(c.publicKey), c.counter, c.transports ? JSON.stringify(c.transports) : null,
-      c.deviceType, c.backedUp, c.aaguid, c.name ?? null, c.createdAt, c.lastUsedAt ?? null,
+      c.id,
+      c.userId,
+      Buffer.from(c.publicKey),
+      c.counter,
+      c.transports ? JSON.stringify(c.transports) : null,
+      c.deviceType,
+      c.backedUp,
+      c.aaguid,
+      c.name ?? null,
+      c.createdAt,
+      c.lastUsedAt ?? null,
     ]);
   }
   async findById(id: string): Promise<StoredCredential | null> {
@@ -64,7 +75,10 @@ export class MysqlChallengeStore implements ChallengeStore {
 
   async save(r: ChallengeRecord): Promise<void> {
     await this.pool.query('INSERT INTO passkey_challenges (challenge, ceremony, user_id, expires_at) VALUES (?,?,?,?)', [
-      r.challenge, r.ceremony, r.userId ?? null, r.expiresAt,
+      r.challenge,
+      r.ceremony,
+      r.userId ?? null,
+      r.expiresAt,
     ]);
   }
   async consume(challenge: string): Promise<ChallengeRecord | null> {

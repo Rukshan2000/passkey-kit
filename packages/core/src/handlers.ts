@@ -33,7 +33,13 @@ export interface HandlerResponse {
 type Input<Req> = { req: Req; body: any; params?: Record<string, string> };
 
 const publicCredential = ({ id, name, deviceType, backedUp, transports, createdAt, lastUsedAt }: StoredCredential) => ({
-  id, name, deviceType, backedUp, transports, createdAt, lastUsedAt,
+  id,
+  name,
+  deviceType,
+  backedUp,
+  transports,
+  createdAt,
+  lastUsedAt,
 });
 
 const errorBody = (e: PasskeyError) => ({ verified: false, error: e.code });
@@ -57,7 +63,7 @@ export function createHandlers<Req>(o: HandlerOptions<Req>) {
         return await fn({ ...i, body: i.body && typeof i.body === 'object' ? i.body : {} });
       } catch (e) {
         if (e instanceof HttpError) return { status: e.status, body: { error: e.code } };
-        if (e instanceof PasskeyError) return { status: e.code === "CREDENTIAL_NOT_FOUND" ? 404 : 400, body: errorBody(e) };
+        if (e instanceof PasskeyError) return { status: e.code === 'CREDENTIAL_NOT_FOUND' ? 404 : 400, body: errorBody(e) };
         throw e;
       }
     };
@@ -65,13 +71,22 @@ export function createHandlers<Req>(o: HandlerOptions<Req>) {
   return {
     registrationOptions: wrap(async ({ req }) => {
       const u = await requireUser(req);
-      return { status: 200, body: await passkey.registration.generateOptions({ userId: u.id, username: u.username, displayName: u.displayName }) };
+      return {
+        status: 200,
+        body: await passkey.registration.generateOptions({ userId: u.id, username: u.username, displayName: u.displayName }),
+      };
     }),
 
     registrationVerify: wrap(async ({ req, body }) => {
       const u = await requireUser(req);
-      const r = await passkey.registration.verify({ userId: u.id, response: body.response, name: typeof body.name === 'string' ? body.name : undefined });
-      return r.verified ? { status: 200, body: { verified: true, credential: publicCredential(r.credential) } } : { status: 400, body: errorBody(r.error) };
+      const r = await passkey.registration.verify({
+        userId: u.id,
+        response: body.response,
+        name: typeof body.name === 'string' ? body.name : undefined,
+      });
+      return r.verified
+        ? { status: 200, body: { verified: true, credential: publicCredential(r.credential) } }
+        : { status: 400, body: errorBody(r.error) };
     }),
 
     authenticationOptions: wrap(async ({ body }) => {
