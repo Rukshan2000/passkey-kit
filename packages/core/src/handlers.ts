@@ -1,5 +1,6 @@
 import { getAuthenticatorName } from './aaguid.js';
 import { PasskeyError } from './errors.js';
+import { MAX_CREDENTIAL_ID } from './validate.js';
 import type { Passkey } from './passkey.js';
 import type { AuthenticationResult, StoredCredential } from './types.js';
 
@@ -82,8 +83,8 @@ class HttpError extends Error {
 }
 
 /**
- * Framework-independent request handlers used by the Express, Fastify, Hono, NestJS and
- * Next.js integrations. Each returns `{ status, body }` (body `null` means no content).
+ * Framework-independent request handlers used by the Express, Fastify, Hono and Next.js
+ * integrations. Each returns `{ status, body }` (body `null` means no content).
  * Errors expose only a stable `code`.
  */
 export function createHandlers<Req>(o: HandlerOptions<Req>) {
@@ -116,7 +117,7 @@ export function createHandlers<Req>(o: HandlerOptions<Req>) {
   const loginFailure = (passkey: Passkey, error: PasskeyError, body: any) => {
     const id = body.response?.id;
     const signal =
-      error.code === 'CREDENTIAL_NOT_FOUND' && typeof id === 'string' && id.length <= 1024
+      error.code === 'CREDENTIAL_NOT_FOUND' && typeof id === 'string' && id.length <= MAX_CREDENTIAL_ID
         ? passkey.credentials.unknownCredentialSignal(id)
         : undefined;
     return { status: 401, body: signal ? { ...errorBody(error), signal } : errorBody(error) };
@@ -210,7 +211,15 @@ export function createHandlers<Req>(o: HandlerOptions<Req>) {
       }
       if (m === 'GET' && /\/credentials$/.test(path)) return { handler: handlers.listCredentials };
       const del = path.match(/\/credentials\/([^/]+)$/);
-      if (m === 'DELETE' && del) return { handler: handlers.deleteCredential, params: { id: decodeURIComponent(del[1]!) } };
+      if (m === 'DELETE' && del) {
+        let id: string;
+        try {
+          id = decodeURIComponent(del[1]!);
+        } catch {
+          return null; // malformed percent-encoding
+        }
+        return { handler: handlers.deleteCredential, params: { id } };
+      }
       if (m === 'GET' && path.endsWith('/.well-known/webauthn')) return { handler: handlers.wellKnown };
       return null;
     },

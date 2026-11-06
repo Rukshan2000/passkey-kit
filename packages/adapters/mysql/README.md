@@ -14,6 +14,7 @@ npm install @passkey-kit/mysql mysql2
 
 ```sh
 mysql "$DB" < node_modules/@passkey-kit/mysql/migrations/001_init.sql
+mysql "$DB" < node_modules/@passkey-kit/mysql/migrations/002_full_credential_id.sql
 ```
 
 ```ts

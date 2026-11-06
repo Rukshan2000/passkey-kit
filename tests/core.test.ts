@@ -275,3 +275,30 @@ describe('credential manager', () => {
     await expect(s.passkey.credentials.rename('other', cred.id, 'x')).rejects.toMatchObject({ code: 'CREDENTIAL_NOT_FOUND' });
   });
 });
+
+describe('secure defaults', () => {
+  it('requires user verification by default', async () => {
+    const s = setup();
+    const noUV = new VirtualAuthenticator({ origin: ORIGIN, userVerified: false });
+    const opts = await s.passkey.registration.generateOptions({ userId: 'u-default', username: 'd' });
+    expect(opts.authenticatorSelection?.userVerification).toBe('required');
+    const r = await s.passkey.registration.verify({ userId: 'u-default', response: noUV.create(opts) });
+    expect(r.verified).toBe(false);
+  });
+});
+
+describe('registration races', () => {
+  it('maps a unique-constraint failure on create to CREDENTIAL_EXISTS', async () => {
+    const s = setup();
+    const opts = await s.passkey.registration.generateOptions({ userId: 'race', username: 'race' });
+    const response = s.auth.create(opts);
+    // Simulate a concurrent registration inserting the same credential between findById and create.
+    const create = s.credentials.create.bind(s.credentials);
+    s.credentials.create = async (c) => {
+      await create(c);
+      return create(c);
+    };
+    const r = await s.passkey.registration.verify({ userId: 'race', response });
+    expect(!r.verified && r.error.code).toBe('CREDENTIAL_EXISTS');
+  });
+});
