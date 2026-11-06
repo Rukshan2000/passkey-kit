@@ -3,7 +3,11 @@
  * ("none" attestation, ES256). Lets tests exercise SimpleWebAuthn's actual
  * verification instead of mocking it.
  */
-import { createHash, generateKeyPairSync, randomBytes, sign, type KeyObject } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { createHash, createPrivateKey, generateKeyPairSync, randomBytes, sign, X509Certificate, type KeyObject } from 'node:crypto';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { isoCBOR } from '@simplewebauthn/server/helpers';
 import type {
   AuthenticationResponseJSON,
@@ -26,7 +30,15 @@ interface Key {
 export class VirtualAuthenticator {
   readonly keys: Key[] = [];
   constructor(
-    private readonly opts: { origin: string; userVerified?: boolean; counterStep?: number } = { origin: 'https://example.com' },
+    private readonly opts: {
+      origin: string;
+      userVerified?: boolean;
+      counterStep?: number;
+      /** Authenticator model ID. Default: all zeros. */
+      aaguid?: string;
+      /** "none" (default), "self" (packed, no certificate) or a packed attestation certificate. */
+      attestation?: 'none' | 'self' | AttestationCert;
+    } = { origin: 'https://example.com' },
   ) {}
 
   private flags(attested: boolean) {
@@ -55,15 +67,27 @@ export class VirtualAuthenticator {
       sha256(rpId),
       Buffer.from([this.flags(true)]),
       u32(counter),
-      Buffer.alloc(16),
+      this.opts.aaguid ? Buffer.from(this.opts.aaguid.replace(/-/g, ''), 'hex') : Buffer.alloc(16),
       Buffer.from([0, id.length]),
       id,
       Buffer.from(isoCBOR.encode(cose)),
     ]);
+    const clientDataJSON = this.clientData('webauthn.create', options.challenge, overrides.origin);
+    const att = this.opts.attestation ?? 'none';
+    let fmt = 'none';
+    const attStmt = new Map<string, unknown>();
+    if (att !== 'none') {
+      // Packed attestation: sign authData || hash(clientDataJSON).
+      fmt = 'packed';
+      const signer = att === 'self' ? privateKey : createPrivateKey(att.keyPem);
+      attStmt.set('alg', -7);
+      attStmt.set('sig', sign('sha256', Buffer.concat([authData, sha256(clientDataJSON)]), signer));
+      if (att !== 'self') attStmt.set('x5c', [att.certDer]);
+    }
     const attestationObject = isoCBOR.encode(
       new Map<string, unknown>([
-        ['fmt', 'none'],
-        ['attStmt', new Map()],
+        ['fmt', fmt],
+        ['attStmt', attStmt],
         ['authData', authData],
       ]) as never,
     );
@@ -74,7 +98,7 @@ export class VirtualAuthenticator {
       type: 'public-key',
       clientExtensionResults: {},
       response: {
-        clientDataJSON: b64(this.clientData('webauthn.create', options.challenge, overrides.origin)),
+        clientDataJSON: b64(clientDataJSON),
         attestationObject: b64(attestationObject),
         transports: ['internal'],
       },
@@ -112,4 +136,56 @@ function u32(n: number) {
   const b = Buffer.alloc(4);
   b.writeUInt32BE(n);
   return b;
+}
+
+export interface AttestationCert {
+  /** PEM of the root CA that issued the attestation certificate. */
+  rootPem: string;
+  certDer: Buffer;
+  keyPem: string;
+}
+
+/**
+ * Create a test root CA and a FIDO "packed" attestation certificate for `aaguid`, using the
+ * openssl CLI (node:crypto can't issue certificates).
+ */
+export function makeAttestationCert(aaguid: string): AttestationCert {
+  const dir = mkdtempSync(join(tmpdir(), 'pk-att-'));
+  const f = (n: string) => join(dir, n);
+  const run = (...args: string[]) => execFileSync('openssl', args, { stdio: 'pipe' });
+  const ec = ['-newkey', 'ec', '-pkeyopt', 'ec_paramgen_curve:P-256', '-nodes'];
+  run('req', '-x509', ...ec, '-keyout', f('root.key'), '-out', f('root.pem'), '-days', '2', '-subj', '/C=US/O=Test Root/CN=Test Root CA');
+  run(
+    'req',
+    ...ec,
+    '-keyout',
+    f('leaf.key'),
+    '-out',
+    f('leaf.csr'),
+    '-subj',
+    '/C=US/O=Test Vendor/OU=Authenticator Attestation/CN=Test Key',
+  );
+  writeFileSync(f('ext.cnf'), `basicConstraints=critical,CA:FALSE\n1.3.6.1.4.1.45724.1.1.4=DER:0410${aaguid.replace(/-/g, '')}\n`);
+  run(
+    'x509',
+    '-req',
+    '-in',
+    f('leaf.csr'),
+    '-CA',
+    f('root.pem'),
+    '-CAkey',
+    f('root.key'),
+    '-CAcreateserial',
+    '-out',
+    f('leaf.pem'),
+    '-days',
+    '1',
+    '-extfile',
+    f('ext.cnf'),
+  );
+  return {
+    rootPem: readFileSync(f('root.pem'), 'utf8'),
+    certDer: Buffer.from(new X509Certificate(readFileSync(f('leaf.pem'))).raw),
+    keyPem: readFileSync(f('leaf.key'), 'utf8'),
+  };
 }

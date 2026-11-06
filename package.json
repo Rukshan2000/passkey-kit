@@ -8,6 +8,8 @@
     "packages/browser",
     "packages/express",
     "packages/fastify",
+    "packages/hono",
+    "packages/next",
     "examples/*"
   ],
   "scripts": {
@@ -16,7 +18,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "pack:check": "npm pack --dry-run -w packages/core -w packages/browser -w packages/express -w packages/fastify -w packages/adapters/memory -w packages/adapters/postgres -w packages/adapters/mysql -w packages/adapters/mongodb > /dev/null",
+    "pack:check": "npm pack --dry-run -w packages/core -w packages/browser -w packages/express -w packages/fastify -w packages/hono -w packages/next -w packages/adapters/redis -w packages/adapters/memory -w packages/adapters/postgres -w packages/adapters/mysql -w packages/adapters/mongodb > /dev/null",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
@@ -29,10 +31,13 @@
     "eslint": "^10.14.0",
     "express": "^5.3.0",
     "fastify": "^5.12.8",
+    "hono": "^4.13.16",
+    "ioredis": "^6.0.0",
     "mongodb": "^7.8.0",
     "mysql2": "^3.24.6",
     "pg": "^8.23.1",
     "prettier": "^3.9.10",
+    "redis": "^6.3.1",
     "tsup": "^9.0.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.1",

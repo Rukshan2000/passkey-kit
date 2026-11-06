@@ -1,6 +1,6 @@
 {
   "name": "@passkey-kit/express",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Express router for passkey-kit.",
   "type": "module",
   "license": "MIT",
@@ -42,7 +42,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@passkey-kit/core": "^0.1.0"
+    "@passkey-kit/core": "^0.2.0"
   },
   "peerDependencies": {
     "express": "^4.21.0 || ^5.0.0"

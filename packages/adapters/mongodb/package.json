@@ -1,6 +1,6 @@
 {
   "name": "@passkey-kit/mongodb",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MongoDB stores for passkey-kit.",
   "type": "module",
   "license": "MIT",
@@ -42,7 +42,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@passkey-kit/core": "^0.1.0",
+    "@passkey-kit/core": "^0.2.0",
     "mongodb": "^6.0.0 || ^7.0.0"
   }
 }

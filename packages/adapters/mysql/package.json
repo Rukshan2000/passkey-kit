@@ -1,6 +1,6 @@
 {
   "name": "@passkey-kit/mysql",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MySQL stores for passkey-kit.",
   "type": "module",
   "license": "MIT",
@@ -43,7 +43,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@passkey-kit/core": "^0.1.0",
+    "@passkey-kit/core": "^0.2.0",
     "mysql2": "^3.0.0"
   }
 }

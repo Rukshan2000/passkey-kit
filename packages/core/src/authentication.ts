@@ -66,7 +66,7 @@ export class Authentication {
         verification = await verifyAuthenticationResponse({
           response,
           expectedChallenge: record.challenge,
-          expectedOrigin: cfg.origin,
+          expectedOrigin: cfg.expectedOrigins,
           expectedRPID: cfg.rpID,
           credential: {
             id: credential.id,
@@ -83,12 +83,17 @@ export class Authentication {
       if (!verification.verified) throw new PasskeyError('VERIFICATION_FAILED', 'Authentication response failed verification');
 
       const info = verification.authenticationInfo;
-      const update = { counter: info.newCounter, backedUp: info.credentialBackedUp, lastUsedAt: new Date(cfg.now()) };
+      const authenticatedAt = new Date(cfg.now());
+      const update = { counter: info.newCounter, backedUp: info.credentialBackedUp, lastUsedAt: authenticatedAt };
       await cfg.credentials.update(credential.id, update);
-      return { verified: true, userId: credential.userId, credential: { ...credential, ...update }, userVerified: info.userVerified };
+      const updated = { ...credential, ...update };
+      await cfg.hooks.onLogin?.({ userId: credential.userId, credential: updated, userVerified: info.userVerified });
+      return { verified: true, userId: credential.userId, credential: updated, userVerified: info.userVerified, authenticatedAt };
     } catch (error) {
-      if (error instanceof PasskeyError) return { verified: false, error };
-      throw error;
+      if (!(error instanceof PasskeyError)) throw error;
+      const id = (input as { response?: { id?: unknown } } | undefined)?.response?.id;
+      await this.cfg.hooks.onLoginFailed?.({ error, credentialId: typeof id === 'string' ? id.slice(0, 1024) : undefined });
+      return { verified: false, error };
     }
   }
 }

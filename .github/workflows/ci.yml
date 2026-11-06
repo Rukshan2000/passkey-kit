@@ -49,6 +49,11 @@ jobs:
         ports: ['3306:3306']
         options: >-
           --health-cmd "mysqladmin ping -proot" --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 10
       mongodb:
         image: mongo:7
         ports: ['27017:27017']
@@ -58,6 +63,7 @@ jobs:
       POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres
       MYSQL_URL: mysql://root:root@localhost:3306/passkey
       MONGODB_URL: mongodb://localhost:27017
+      REDIS_URL: redis://localhost:6379
       REQUIRE_DB_TESTS: '1'
     steps:
       - uses: actions/checkout@v4

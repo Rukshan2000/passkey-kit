@@ -6,6 +6,9 @@ import { Passkey } from '@passkey-kit/core';
 import { MemoryChallengeStore, MemoryCredentialStore } from '@passkey-kit/memory';
 import { passkeyRouter } from '@passkey-kit/express';
 import { passkeyPlugin } from '@passkey-kit/fastify';
+import { Hono } from 'hono';
+import { passkeyRoutes } from '@passkey-kit/hono';
+import { createPasskeyRoute } from '@passkey-kit/next';
 import { VirtualAuthenticator } from './virtual-authenticator.js';
 
 const ORIGIN = 'https://example.com';
@@ -63,12 +66,12 @@ function suite(name: string, start: () => Promise<{ call: Call; close: () => Pro
       expect((await call('POST', '/login/verify', { response: a.get(anon.body) })).status).toBe(200);
 
       expect((await call('DELETE', `/credentials/${list.body[0].id}`, undefined, 'u-mallory')).status).toBe(404);
-      expect((await call('DELETE', `/credentials/${list.body[0].id}`, undefined, 'u-alice')).status).toBe(204);
+      const del = await call('DELETE', `/credentials/${list.body[0].id}`, undefined, 'u-alice');
+      expect(del.status).toBe(200);
+      expect(del.body.signal).toMatchObject({ signalName: 'allAcceptedCredentials', rpID: 'example.com', allAcceptedCredentialIDs: [] });
       const after = await call('POST', '/login/options', {});
-      expect(await call('POST', '/login/verify', { response: a.get(after.body) })).toMatchObject({
-        status: 401,
-        body: { error: 'CREDENTIAL_NOT_FOUND' },
-      });
+      const gone = await call('POST', '/login/verify', { response: a.get(after.body) });
+      expect(gone).toMatchObject({ status: 401, body: { error: 'CREDENTIAL_NOT_FOUND', signal: { signalName: 'unknownCredential' } } });
     });
 
     it('rejects garbage input with 400/401 and an error code only', async () => {
@@ -110,4 +113,31 @@ suite('fastify', async () => {
     return { status: res.statusCode, body: res.body ? JSON.parse(res.body) : null };
   };
   return { call, close: () => app.close() };
+});
+
+// Shared by the fetch-based integrations: send a web Request through `fetchFn`.
+const fetchCall =
+  (fetchFn: (r: Request) => Response | Promise<Response>): Call =>
+  async (method, path, body, user) => {
+    const res = await fetchFn(
+      new Request(`https://example.com/pk${path}`, {
+        method,
+        headers: { 'content-type': 'application/json', ...(user ? { 'x-user': user } : {}) },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      }),
+    );
+    const text = await res.text();
+    return { status: res.status, body: text ? JSON.parse(text) : null };
+  };
+const headerReq = (get: (name: string) => string | undefined | null) => ({ headers: { 'x-user': get('x-user') ?? undefined } });
+
+suite('hono', async () => {
+  const app = new Hono();
+  app.route('/pk', passkeyRoutes({ passkey: makePasskey(), ...common, getUser: (c) => getUser(headerReq((n) => c.req.header(n))) }));
+  return { call: fetchCall((r) => app.request(r)), close: async () => {} };
+});
+
+suite('next', async () => {
+  const route = createPasskeyRoute({ passkey: makePasskey(), ...common, getUser: (req) => getUser(headerReq((n) => req.headers.get(n))) });
+  return { call: fetchCall((r) => route[r.method as 'GET' | 'POST' | 'DELETE'](r)), close: async () => {} };
 });

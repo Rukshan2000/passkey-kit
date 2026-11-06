@@ -1,6 +1,6 @@
 {
   "name": "@passkey-kit/postgres",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "PostgreSQL stores for passkey-kit.",
   "type": "module",
   "license": "MIT",
@@ -43,7 +43,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@passkey-kit/core": "^0.1.0",
+    "@passkey-kit/core": "^0.2.0",
     "pg": "^8.0.0"
   }
 }

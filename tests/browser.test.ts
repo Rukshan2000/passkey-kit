@@ -53,4 +53,17 @@ describe('PasskeyClient', () => {
     ac.abort();
     await expect(new PasskeyClient().authenticate({ challenge: 'x' }, { signal: ac.signal })).rejects.toThrow();
   });
+
+  it('sends signals when supported and returns false otherwise', async () => {
+    const signalUnknownCredential = vi.fn(async () => undefined);
+    vi.stubGlobal('PublicKeyCredential', { signalUnknownCredential });
+    const c = new PasskeyClient();
+    const ok = await c.signal({ signalName: 'unknownCredential', rpID: 'example.com', credentialID: 'abc' });
+    expect(ok).toBe(true);
+    expect(signalUnknownCredential).toHaveBeenCalledWith({ rpId: 'example.com', credentialId: 'abc' });
+
+    vi.stubGlobal('PublicKeyCredential', {});
+    expect(await c.signal({ signalName: 'unknownCredential', rpID: 'example.com', credentialID: 'abc' })).toBe(false);
+    expect(await c.signal(undefined)).toBe(false);
+  });
 });

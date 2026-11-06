@@ -1,6 +1,6 @@
 {
   "name": "@passkey-kit/memory",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "In-memory stores for passkey-kit (development/tests only).",
   "type": "module",
   "license": "MIT",
@@ -42,6 +42,6 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@passkey-kit/core": "^0.1.0"
+    "@passkey-kit/core": "^0.2.0"
   }
 }
