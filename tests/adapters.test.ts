@@ -79,7 +79,7 @@ for (const name of ['memory', 'postgres', 'mysql', 'mongodb']) {
       deviceType: 'multiDevice',
       backedUp: true,
       aaguid: '00000000-0000-0000-0000-000000000000',
-      createdAt: new Date(Math.floor(Date.now() / 1000) * 1000),
+      createdAt: new Date('2026-01-01T00:00:00.000Z'), // fixed: Date.now() here was flaky across a second boundary
     });
 
     it('credential CRUD round-trips', async () => {
