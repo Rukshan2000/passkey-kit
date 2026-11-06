@@ -1,0 +1,39 @@
+{
+  "name": "passkey-kit",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/core",
+    "packages/adapters/*",
+    "packages/browser",
+    "packages/express",
+    "packages/fastify",
+    "examples/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "pack:check": "npm pack --dry-run --workspaces --json > /dev/null"
+  },
+  "devDependencies": {
+    "@simplewebauthn/browser": "^14.0.0",
+    "@simplewebauthn/server": "^14.0.3",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "eslint": "^10.14.0",
+    "express": "^5.3.0",
+    "fastify": "^5.12.8",
+    "mongodb": "^7.8.0",
+    "mysql2": "^3.24.6",
+    "pg": "^8.23.1",
+    "prettier": "^3.9.10",
+    "tsup": "^9.0.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.1.0"
+  }
+}

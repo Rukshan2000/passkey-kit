@@ -1,0 +1,47 @@
+{
+  "name": "@passkey-kit/memory",
+  "version": "0.1.0",
+  "description": "In-memory stores for passkey-kit (development/tests only).",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rukshan2000/passkey-kit.git",
+    "directory": "packages/adapters/memory"
+  },
+  "keywords": [
+    "passkey",
+    "webauthn",
+    "fido2",
+    "passwordless",
+    "authentication"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup --config ../../../tsup.config.ts",
+    "prepack": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@passkey-kit/core": "^0.1.0"
+  }
+}
