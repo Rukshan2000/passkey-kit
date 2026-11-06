@@ -141,3 +141,59 @@ suite('next', async () => {
   const route = createPasskeyRoute({ passkey: makePasskey(), ...common, getUser: (req) => getUser(headerReq((n) => req.headers.get(n))) });
   return { call: fetchCall((r) => route[r.method as 'GET' | 'POST' | 'DELETE'](r)), close: async () => {} };
 });
+
+describe('fetch handler hardening', () => {
+  const route = createPasskeyRoute({ passkey: makePasskey(), ...common, getUser: () => null });
+  const post = (body: BodyInit, headers: Record<string, string> = {}) =>
+    route.POST(new Request('https://example.com/pk/login/verify', { method: 'POST', headers, body }));
+
+  it('rejects non-JSON bodies (login CSRF via text/plain simple request)', async () => {
+    const res = await post(JSON.stringify({ response: {} }), { 'content-type': 'text/plain' });
+    expect(res.status).toBe(415);
+  });
+
+  it('rejects oversized bodies by bytes, including multi-byte characters', async () => {
+    const res = await post('"' + 'é'.repeat(40 * 1024) + '"', { 'content-type': 'application/json' });
+    expect(res.status).toBe(413);
+  });
+
+  it('rejects oversized streamed bodies without content-length', async () => {
+    const stream = new ReadableStream({
+      pull(c) {
+        c.enqueue(new Uint8Array(16 * 1024));
+      },
+    });
+    const req = new Request('https://example.com/pk/login/verify', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: stream,
+      duplex: 'half',
+    } as RequestInit);
+    expect((await route.POST(req)).status).toBe(413);
+  });
+});
+
+describe('routing edge cases', () => {
+  it('malformed percent-encoding in a credential id is a 404, not a crash', async () => {
+    const route = createPasskeyRoute({ passkey: makePasskey(), ...common, getUser: () => ({ id: 'u', username: 'u' }) });
+    const res = await route.DELETE(new Request('https://example.com/pk/credentials/%E0', { method: 'DELETE' }));
+    expect(res.status).toBe(404);
+  });
+
+  it('fastify serves /.well-known/webauthn', async () => {
+    const app = Fastify();
+    const passkey = new Passkey({
+      rpName: 'T',
+      rpID: 'example.com',
+      origin: 'https://example.com',
+      relatedOrigins: ['https://example.co.uk'],
+      credentials: new MemoryCredentialStore(),
+      challenges: new MemoryChallengeStore(),
+    });
+    await app.register(passkeyPlugin, { passkey, getUser: () => null });
+    const res = await app.inject({ method: 'GET', url: '/.well-known/webauthn' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ origins: ['https://example.com', 'https://example.co.uk'] });
+    await app.close();
+  });
+});

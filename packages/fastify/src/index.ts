@@ -19,6 +19,7 @@ export const passkeyPlugin: FastifyPluginAsync<PasskeyPluginOptions> = async (ap
     ['POST', '/reauth/verify'],
     ['GET', '/credentials'],
     ['DELETE', '/credentials/:id'],
+    ['GET', '/.well-known/webauthn'],
   ];
   for (const [method, path] of routes) {
     app.route({

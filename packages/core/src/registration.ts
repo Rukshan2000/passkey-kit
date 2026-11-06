@@ -9,7 +9,7 @@ import type {
   RegistrationVerifyInput,
   StoredCredential,
 } from './types.js';
-import { assertString, fail } from './validate.js';
+import { MAX_CREDENTIAL_ID, assertString, fail } from './validate.js';
 import { getAuthenticatorName } from './aaguid.js';
 import { decodeAttestationObject } from '@simplewebauthn/server/helpers';
 
@@ -106,6 +106,7 @@ export class Registration {
 
       const info = verification.registrationInfo;
       if (cfg.allowedAuthenticators) await checkAttestation(cfg.allowedAuthenticators, info.fmt, info.attestationObject, info.aaguid);
+      if (info.credential.id.length > MAX_CREDENTIAL_ID) throw new PasskeyError('INVALID_INPUT', 'Credential ID is too long');
       if (await cfg.credentials.findById(info.credential.id)) throw new PasskeyError('CREDENTIAL_EXISTS', 'Credential already registered');
       const credential: StoredCredential = {
         id: info.credential.id,
@@ -119,7 +120,13 @@ export class Registration {
         name: input.name?.slice(0, 128) ?? getAuthenticatorName(info.aaguid),
         createdAt: new Date(cfg.now()),
       };
-      await cfg.credentials.create(credential);
+      try {
+        await cfg.credentials.create(credential);
+      } catch (e) {
+        // A concurrent registration of the same credential won the race (unique constraint).
+        if (await cfg.credentials.findById(credential.id)) throw new PasskeyError('CREDENTIAL_EXISTS', 'Credential already registered');
+        throw e;
+      }
       await cfg.hooks.onRegistered?.({ userId, credential });
       return { verified: true, credential };
     } catch (error) {

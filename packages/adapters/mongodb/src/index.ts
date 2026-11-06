@@ -12,7 +12,7 @@ function toCredential({ _id, publicKey, ...rest }: CredDoc): StoredCredential {
 }
 
 /**
- * Create indexes (unique user lookup, TTL expiry of challenges). Call once at startup.
+ * Create indexes (user lookup, TTL expiry of challenges; `_id` is already unique). Call once at startup.
  * The TTL index is a backstop; expiry is also checked on every verification.
  */
 export async function ensureMongoIndexes(db: Db, prefix = 'passkey_'): Promise<void> {
@@ -36,8 +36,13 @@ export class MongoCredentialStore implements CredentialStore {
     return (await this.col.find({ userId }).sort({ createdAt: 1 }).toArray()).map(toCredential);
   }
   async update(id: string, u: CredentialUpdate): Promise<void> {
-    const set = Object.fromEntries(Object.entries(u).filter(([, v]) => v !== undefined));
-    if (Object.keys(set).length) await this.col.updateOne({ _id: id }, { $set: set });
+    const { counter, ...rest } = u;
+    const set = Object.fromEntries(Object.entries(rest).filter(([, v]) => v !== undefined));
+    const op: Record<string, object> = {};
+    if (Object.keys(set).length) op.$set = set;
+    // $max: concurrent logins may finish out of order; never move the counter backwards.
+    if (counter !== undefined) op.$max = { counter };
+    if (Object.keys(op).length) await this.col.updateOne({ _id: id }, op);
   }
   async delete(id: string, userId: string): Promise<boolean> {
     return (await this.col.deleteOne({ _id: id, userId })).deletedCount === 1;

@@ -53,7 +53,7 @@ export class PostgresCredentialStore implements CredentialStore {
   async update(id: string, u: CredentialUpdate): Promise<void> {
     await this.db.query(
       `UPDATE passkey_credentials SET
-         counter = COALESCE($2, counter), backed_up = COALESCE($3, backed_up),
+         counter = GREATEST(counter, COALESCE($2, counter)), backed_up = COALESCE($3, backed_up),
          last_used_at = COALESCE($4, last_used_at), name = COALESCE($5, name)
        WHERE id = $1`,
       [id, u.counter ?? null, u.backedUp ?? null, u.lastUsedAt ?? null, u.name ?? null],
