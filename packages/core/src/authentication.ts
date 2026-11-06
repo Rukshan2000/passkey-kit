@@ -8,7 +8,7 @@ import type {
   AuthenticationVerifyInput,
   PublicKeyCredentialRequestOptionsJSON,
 } from './types.js';
-import { assertString, fail } from './validate.js';
+import { MAX_CREDENTIAL_ID, assertString, fail } from './validate.js';
 
 export class Authentication {
   constructor(private readonly cfg: ResolvedConfig) {}
@@ -46,7 +46,7 @@ export class Authentication {
       const response = input?.response;
       if (!response || typeof response !== 'object' || !response.response) fail('response is required');
       const expectedUser = input.userId === undefined ? undefined : assertString(input.userId, 'userId', 64);
-      const credentialId = assertString(response.id, 'response.id', 1024);
+      const credentialId = assertString(response.id, 'response.id', MAX_CREDENTIAL_ID);
       const challenge = challengeFromResponse(response.response.clientDataJSON);
       const { cfg } = this;
       const record = await consumeChallenge(cfg.challenges, challenge, 'authentication', cfg.now(), expectedUser);
@@ -92,7 +92,7 @@ export class Authentication {
     } catch (error) {
       if (!(error instanceof PasskeyError)) throw error;
       const id = (input as { response?: { id?: unknown } } | undefined)?.response?.id;
-      await this.cfg.hooks.onLoginFailed?.({ error, credentialId: typeof id === 'string' ? id.slice(0, 1024) : undefined });
+      await this.cfg.hooks.onLoginFailed?.({ error, credentialId: typeof id === 'string' ? id.slice(0, MAX_CREDENTIAL_ID) : undefined });
       return { verified: false, error };
     }
   }

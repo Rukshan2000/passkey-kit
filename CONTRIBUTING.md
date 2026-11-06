@@ -6,7 +6,7 @@ For security issues, follow [SECURITY.md](SECURITY.md) instead of opening an iss
 
 ## Setup
 
-Requires Node.js 22+.
+Requires Node.js 22.12+.
 
 ```sh
 git clone https://github.com/Rukshan2000/passkey-kit.git

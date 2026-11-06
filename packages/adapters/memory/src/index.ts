@@ -21,7 +21,11 @@ export class MemoryCredentialStore implements CredentialStore {
   }
   async update(id: string, update: CredentialUpdate): Promise<void> {
     const c = this.map.get(id);
-    if (c) Object.assign(c, structuredClone(update));
+    if (!c) return;
+    const { counter, ...rest } = structuredClone(update);
+    Object.assign(c, rest);
+    // Concurrent logins may finish out of order: never move the counter backwards.
+    if (counter !== undefined) c.counter = Math.max(c.counter, counter);
   }
   async delete(id: string, userId: string): Promise<boolean> {
     if (this.map.get(id)?.userId !== userId) return false;

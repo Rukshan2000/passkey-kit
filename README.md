@@ -94,7 +94,7 @@ flowchart LR
 
 ## Installation
 
-Requires Node.js 22 or later.
+Requires Node.js 22.12 or later. Packages are ESM; `require()` also works, through Node's built-in require(esm) support.
 
 ```sh
 # Server
@@ -238,7 +238,7 @@ sequenceDiagram
 Two styles are supported:
 
 - **Usernameless** (recommended): call `generateOptions()` with no user. The device offers the user's passkeys for your site. passkey-kit works out who the user is **from the stored credential**, never from what the browser claims.
-- **Username-first**: call `generateOptions({ userId })`, and only that user's passkeys are allowed. With the Express or Fastify integration, enable this by passing `findUserIdByUsername`. Unknown usernames quietly get usernameless options, so attackers can't use the endpoint to discover which accounts exist.
+- **Username-first**: call `generateOptions({ userId })`, and only that user's passkeys are allowed. With the Express or Fastify integration, enable this by passing `findUserIdByUsername`. Unknown usernames quietly get usernameless options instead of an error. This is not full enumeration protection: a known user's options list their credential IDs (`allowCredentials`), so a response still reveals whether the account has passkeys. Rate-limit the endpoint, or offer usernameless sign-in only if account privacy matters.
 
 A successful `verify` only tells you who the user is. Creating the session (cookie, JWT, …) is your job, in `onAuthenticated` or after calling `verify` yourself.
 
@@ -407,7 +407,7 @@ const credentials = new MysqlCredentialStore(pool);
 const challenges = new MysqlChallengeStore(pool);
 ```
 
-Migration: `node_modules/@passkey-kit/mysql/migrations/001_init.sql`. A challenge is consumed inside a transaction with `SELECT … FOR UPDATE`.
+Migrations: run `node_modules/@passkey-kit/mysql/migrations/001_init.sql`, then `002_full_credential_id.sql` (also required when upgrading from 0.2.0). A challenge is consumed inside a transaction with `SELECT … FOR UPDATE`.
 
 ### MongoDB
 
@@ -636,7 +636,7 @@ new Passkey({
   origin: ['https://example.com', 'https://app.example.com'],
   credentials,
   challenges,
-  userVerification: 'preferred',
+  userVerification: 'required',
   residentKey: 'required',
   attestationType: 'none',
   authenticatorAttachment: undefined,
@@ -654,7 +654,7 @@ new Passkey({
 | `origin` | required | Exact origin or origins allowed, e.g. `https://example.com`. Must be HTTPS (except `localhost`) and inside `rpID`. |
 | `credentials` | required | A `CredentialStore`. |
 | `challenges` | required | A `ChallengeStore`. |
-| `userVerification` | `'preferred'` | `'required'` makes the user unlock with biometrics or a PIN **and rejects responses without it**. |
+| `userVerification` | `'required'` | The user must unlock with biometrics or a PIN, and responses without it are rejected. `'preferred'` also accepts possession alone (e.g. a tapped security key without PIN); check `result.userVerified` if you use it. |
 | `residentKey` | `'required'` | Discoverable passkeys, needed for usernameless sign-in. |
 | `attestationType` | `'none'` | Use `'direct'` only if you need to check the authenticator model. |
 | `authenticatorAttachment` | any | `'platform'` (built-in only) or `'cross-platform'` (security keys and phones). |
@@ -684,6 +684,7 @@ passkey-kit enforces these rules for you:
 Your responsibilities:
 
 - **Serve over HTTPS** in production.
+- **CSRF**: the passkey routes only accept `Content-Type: application/json` request bodies (others get 415), so cross-site forms and `text/plain` posts can't reach them without a CORS preflight. Don't enable permissive CORS with credentials on these routes, and use `SameSite=Lax` (or stricter) session cookies.
 - **Rate-limit** the `/login/*`, `/register/*` and `/reauth/*` routes, with the [`rateLimit` option](#rate-limiting) or your framework's limiter.
 - **Regenerate the session** on sign-in (as in the examples) to prevent session fixation.
 - **Use a shared database** for challenges when you run more than one server instance.

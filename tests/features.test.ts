@@ -271,3 +271,23 @@ describe('allowed authenticators (attestation)', () => {
     expect(code(r)).toBe('VERIFICATION_FAILED');
   });
 });
+
+describe('tenant registry invalidate', () => {
+  it('normalizes host and port like forHost', async () => {
+    let calls = 0;
+    const reg = createTenantRegistry(() => {
+      calls++;
+      return {
+        rpName: 'T',
+        rpID: 'a.com',
+        origin: 'https://a.com',
+        credentials: new MemoryCredentialStore(),
+        challenges: new MemoryChallengeStore(),
+      };
+    });
+    await reg.forHost('A.com:443');
+    reg.invalidate('A.COM:443');
+    await reg.forHost('a.com');
+    expect(calls).toBe(2);
+  });
+});

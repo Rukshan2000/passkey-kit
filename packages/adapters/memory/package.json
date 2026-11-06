@@ -1,6 +1,6 @@
 {
   "name": "@passkey-kit/memory",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "In-memory stores for passkey-kit (development/tests only).",
   "type": "module",
   "license": "MIT",
@@ -17,13 +17,14 @@
     "authentication"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   },
   "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -42,6 +43,6 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@passkey-kit/core": "^0.2.0"
+    "@passkey-kit/core": "^0.3.0"
   }
 }

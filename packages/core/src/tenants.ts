@@ -22,9 +22,10 @@ export interface TenantRegistry {
  */
 export function createTenantRegistry(resolve: (host: string) => PasskeyConfig | null | Promise<PasskeyConfig | null>): TenantRegistry {
   const cache = new Map<string, Promise<Passkey | null>>();
+  const normalize = (host: string) => host.toLowerCase().replace(/:\d+$/, '');
   return {
     forHost(host) {
-      const key = host?.toLowerCase().replace(/:\d+$/, '');
+      const key = host ? normalize(host) : undefined;
       if (!key || key.length > 253 || !/^[a-z0-9.-]+$/.test(key)) return Promise.resolve(null);
       let p = cache.get(key);
       if (!p) {
@@ -39,7 +40,7 @@ export function createTenantRegistry(resolve: (host: string) => PasskeyConfig | 
       return p;
     },
     invalidate(host) {
-      cache.delete(host.toLowerCase());
+      cache.delete(normalize(host));
     },
   };
 }

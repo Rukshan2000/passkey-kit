@@ -34,7 +34,8 @@ if (process.env.MYSQL_URL) {
   harnesses.mysql = {
     async setup() {
       await pool.query('DROP TABLE IF EXISTS passkey_credentials, passkey_challenges');
-      await pool.query(readFileSync('packages/adapters/mysql/migrations/001_init.sql', 'utf8'));
+      for (const f of ['001_init.sql', '002_full_credential_id.sql'])
+        await pool.query(readFileSync(`packages/adapters/mysql/migrations/${f}`, 'utf8'));
       return { credentials: new MysqlCredentialStore(pool as never), challenges: new MysqlChallengeStore(pool as never) };
     },
     teardown: () => pool.end(),
@@ -119,6 +120,20 @@ for (const name of ['memory', 'postgres', 'mysql', 'mongodb', 'redis', 'ioredis'
       expect(await credentials.delete('c1', 'u2')).toBe(false);
       expect(await credentials.delete('c1', 'u1')).toBe(true);
       expect(await credentials.findById('c1')).toBeNull();
+    });
+
+    it('counter never moves backwards (out-of-order concurrent logins)', async () => {
+      await credentials.create(cred('ctr'));
+      await credentials.update('ctr', { counter: 7 });
+      await credentials.update('ctr', { counter: 6, name: 'still updated' });
+      expect(await credentials.findById('ctr')).toMatchObject({ counter: 7, name: 'still updated' });
+    });
+
+    it('stores full-length (1364-char) credential IDs distinct from shared prefixes', async () => {
+      const long = 'A'.repeat(1363);
+      await credentials.create(cred(long + 'x'));
+      await credentials.create(cred(long + 'y'));
+      expect((await credentials.findById(long + 'y'))?.id).toBe(long + 'y');
     });
 
     it('challenges are consumed exactly once, even concurrently', async () => {

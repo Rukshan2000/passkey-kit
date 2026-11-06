@@ -58,7 +58,7 @@ function resolve(config: PasskeyConfig): ResolvedConfig {
     relatedOrigins,
     expectedOrigins: [...origins, ...relatedOrigins],
     allowedAuthenticators,
-    userVerification: config.userVerification ?? 'preferred',
+    userVerification: config.userVerification ?? 'required',
     residentKey: config.residentKey ?? 'required',
     attestationType: config.attestationType ?? 'none',
     timeoutMs,
