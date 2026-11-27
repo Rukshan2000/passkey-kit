@@ -28,20 +28,20 @@
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
-    "eslint": "^10.14.0",
+    "eslint": "^10.15.0",
     "express": "^5.3.0",
     "fastify": "^5.12.8",
-    "hono": "^4.13.16",
-    "ioredis": "^6.0.0",
-    "mongodb": "^7.8.0",
+    "hono": "^4.13.21",
+    "ioredis": "^6.1.0",
+    "mongodb": "^7.9.1",
     "mysql2": "^3.24.6",
     "pg": "^8.23.1",
-    "prettier": "^3.9.10",
-    "redis": "^6.3.1",
+    "prettier": "^3.10.1",
+    "redis": "^6.4.0",
     "tsup": "^9.0.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.72.1",
-    "vitest": "^5.1.0"
+    "typescript-eslint": "^8.74.0",
+    "vitest": "^5.1.1"
   },
   "overrides": {
     "minimatch": "^11.0.1"
